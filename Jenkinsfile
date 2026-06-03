@@ -12,7 +12,8 @@ stages {
 
 stage('Clone') {
 steps {
-git 'https://github.com/yourusername/devops-project.git'
+git credentialsId: 'git-creds',
+            url: 'https://github.com/Rajesh72892/cicdproject.git'
 }
 }
 
