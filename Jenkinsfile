@@ -1,0 +1,57 @@
+pipeline {
+
+agent any
+
+environment {
+AWS_REGION='ap-south-1'
+ACCOUNT_ID='123456789012'
+REPO='rajesh-httpd'
+}
+
+stages {
+
+stage('Clone') {
+steps {
+git 'https://github.com/yourusername/devops-project.git'
+}
+}
+
+stage('Build') {
+steps {
+sh 'docker build -t rajesh-httpd .'
+}
+}
+
+stage('Login ECR') {
+steps {
+sh '''
+aws ecr get-login-password \
+--region $AWS_REGION | \
+docker login \
+--username AWS \
+--password-stdin \
+$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+'''
+}
+}
+
+stage('Tag') {
+steps {
+sh '''
+docker tag rajesh-httpd:latest \
+$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:latest
+'''
+}
+}
+
+stage('Push') {
+steps {
+sh '''
+docker push \
+$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:latest
+'''
+}
+}
+
+}
+}
