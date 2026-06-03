@@ -1,58 +1,56 @@
 pipeline {
+    agent any
 
-agent any
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ACCOUNT_ID = '123456789012'   // Replace with your AWS Account ID
+        REPO = 'rajesh-httpd'
+    }
 
-environment {
-AWS_REGION='ap-south-1'
-ACCOUNT_ID='123456789012'
-REPO='rajesh-httpd'
-}
+    stages {
 
-stages {
+        stage('Build') {
+            steps {
+                sh 'docker build -t rajesh-httpd .'
+            }
+        }
 
-stage('Clone') {
-steps {
-git credentialsId: 'git-creds',
-            url: 'https://github.com/Rajesh72892/cicdproject.git'
-}
-}
+        stage('Login ECR') {
+            steps {
+                sh '''
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin \
+                $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                '''
+            }
+        }
 
-stage('Build') {
-steps {
-sh 'docker build -t rajesh-httpd .'
-}
-}
+        stage('Tag') {
+            steps {
+                sh '''
+                docker tag rajesh-httpd:latest \
+                $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:latest
+                '''
+            }
+        }
 
-stage('Login ECR') {
-steps {
-sh '''
-aws ecr get-login-password \
---region $AWS_REGION | \
-docker login \
---username AWS \
---password-stdin \
-$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-'''
-}
-}
+        stage('Push') {
+            steps {
+                sh '''
+                docker push \
+                $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:latest
+                '''
+            }
+        }
+    }
 
-stage('Tag') {
-steps {
-sh '''
-docker tag rajesh-httpd:latest \
-$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:latest
-'''
-}
-}
+    post {
+        success {
+            echo 'Image pushed to ECR successfully!'
+        }
 
-stage('Push') {
-steps {
-sh '''
-docker push \
-$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:latest
-'''
-}
-}
-
-}
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
 }
