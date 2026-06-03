@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION = 'ap-south-1'
-        ACCOUNT_ID = '123456789012'   // Replace with your AWS Account ID
+        ACCOUNT_ID = '4752-5176-1877'   // Replace with your AWS Account ID
         REPO = 'rajesh-httpd'
     }
 
